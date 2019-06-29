@@ -1,7 +1,8 @@
 # Reinforcement Learning with Fairness Constraints for Resource Distribution in Human-Robot Teams
 
 We provide a Python version of our algorithm with adjustable fairness constraints.
-https://github.com/anonym187/RL_Fairness_Constraints/issues/1#issue-462326527
+![All_figs-3 001](https://user-images.githubusercontent.com/52357042/60387956-7363c600-9a5f-11e9-86dd-ac59fb86bfd5.png)
+
 
 ### Prerequisites
 
