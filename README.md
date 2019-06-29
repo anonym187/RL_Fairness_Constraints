@@ -9,7 +9,6 @@ We provide a Python version of our algorithm with adjustable fairness constraint
 This code requires Python3. You can use pip to install the dependencies required:
 ```
 pip install -r requirements.txt
-
 ```
 
 
