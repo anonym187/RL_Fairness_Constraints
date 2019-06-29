@@ -5,13 +5,9 @@ We provide a Python version of our algorithm with adjustable fairness constraint
 ![All_figs-3 001](https://user-images.githubusercontent.com/52357042/60387956-7363c600-9a5f-11e9-86dd-ac59fb86bfd5.png)
 
 
-### Getting Started
-
-This code requires Python3. 
-
 ### Prerequisites
 
-You can use pip to install the dependencies required:
+This code requires Python3. You can use pip to install the dependencies required:
 ```
 pip install -r requirements.txt
 ```
