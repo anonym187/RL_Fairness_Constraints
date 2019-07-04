@@ -1,160 +1,154 @@
 import numpy as np
-from scipy.stats import bernoulli  
-import numpy as np
-import matplotlib.pyplot as plt
 import pandas as pd 
-from random import seed
-from random import gauss
 from scipy.stats import truncnorm
-from random import shuffle
 import math
  
 
-    
+  
+
+def tau(j,K):
+  tau_1 = K + 1
+  return tau_1 + int((j-1)/v) 
+
+
+def strict_rate_UCB(S,g,K,v,T):
+  """
+  Returns which action to take: Pick player or run UCB
+
+  Parameters
+  ----------
+  S : Indices for non-UCB arm selection
+  g : Arms corresponding to indices in S
+  K : Number of Arms
+  v : Rate (must be less than 1/K)
+  T : Time horizon
+
+  Returns
+  -------
+  schedule of arms ,where 
+  0,1,2,3 -> 0: UCB,  1: Player1, 2: Player 2, 3: Player 3
+  """
+  arms_selected = []  
+  numbers_of_selections = [0] * K  #Keep track of number of times each arm gets selected
+  sums_of_reward = [0] * K #Keep track of the total sum of rewards
+  schedule = [] 
+  # Algorithm initialization
+  t = 1
+  j = 1
+  # Pull each arm onces
+  while t <= K:
+    i_t = t
+
+    arms_selected.append(i_t)
+
+    sums_of_reward[i_t-1] = df.values[t-1, i_t-1]
+    numbers_of_selections[i_t-1] += 1
+    schedule.append(i_t)
+
+    t = t + 1
+  # Main loop
+  N = T-K # Number of times to iterate
+  for j in range(1,int(N*v+1)):
+    while t < tau(j+1,K):
+      if t - tau(j,K) + 1 in S:
+        i_t = int(g[t-tau(j,K)+1-1])
+        schedule.append(i_t)
+      else: 
+        # UCB
+        max_upper_bound = float('-inf')
+        for i in range(0, K):
+              #Confidence Interval
+              conf_int = 2 * math.sqrt(math.log(T) / numbers_of_selections[i])
+              
+              #Average Reward
+              average_reward = sums_of_reward[i] / numbers_of_selections[i]
+              
+              #Upper Bound
+              upper_bound = (average_reward + conf_int)
+
+              if upper_bound > max_upper_bound:
+                  max_upper_bound = upper_bound
+                  i_t = i+1
+        schedule.append(0)
+      arms_selected.append(i_t)
+      arm_indx = int(i_t-1)
+      numbers_of_selections[arm_indx] += 1
+      sums_of_reward[arm_indx] += df.values[t-1, arm_indx]
+      t = t + 1  
+    j = j + 1
+  return {'schedule':schedule, 'arms_selected':arms_selected, 'numbers_of_selections': numbers_of_selections}
+
+def choose_g(S,v):
+  g = np.zeros(int(1/v))
+  k = 1
+  for i in range(1,len(g)+1):
+    if i in S:
+      g[i-1] = k
+      k = k + 1
+  return g
 
 def NormVar(mean=0, sd=1, low=0, upp=10):
     return truncnorm(
         (low - mean) / sd, (upp - mean) / sd, loc=mean, scale=sd)
 
-def SeqChoose(v,K,t):
-    """
-    Returns which action to take: Pick Player1, Player 2, or run UCB
 
-    Parameters
-    ----------
-    v : Rate
-        Must be below 1/K
-    K : Number of Arms
-    t : Current time step
+K = 2  # Number of Arms
+T = 102 # horizon including initialization of arms
+v = 1.0/4 
 
-    Returns
-    -------
-    int
-        Description of return value
-        0,1,2 -> 0: UCB,  1: Player1, 2:Player 2
-    """
-
-    seq=0
-
-    if t% (1/v)==0:
-        seq = 0
-
-    elif ((t%(1/v))+1) %  math.floor(1/(K*v)) == 0:
-
-        seq = math.ceil((t%(1/v))/(math.floor(1/(K*v))))
-
-    else:
-        seq == 0
-    
-
-    return seq
+# choose S and g for scheduling
+S = [1,3]
+g = choose_g(S,v)
 
 
-#Create Data frame of Two Player Responses
-p1=   NormVar(mean = .4, sd = .3, low = 0 , upp = 1  )
-p2 =  NormVar(mean = .6, sd = .3, low = 0 , upp = 1  )
+#Create Data frame of Three Player Responses
+p1=   NormVar(mean = .1, sd = .3, low = 0 , upp = 1  )
+p2 =  NormVar(mean = .8, sd = .3, low = 0 , upp = 1  )
+p3 =  NormVar(mean = .7, sd = .3, low = 0 , upp = 1  )
 
-play1 = p1.rvs(10000)
-play2 = p2.rvs(10000)
-dat= {'p1': play1,'p2':play2}
-df = pd.DataFrame(dat)
-
-N = 100 # Number of times to iterate
-d = 2  #Number of Arms
-arms_selected = []  
-numbers_of_selections = [1] * d  #Keep track of number of times each arm gets selected
-sums_of_reward = [0] * d #Keep track of the total sum of rewards
-total_reward = 0
-
-#Initialization:pull each arm once
-for i in range(0, d):
-
-    sums_of_reward[i]  =  df.values[i, i]
-
-for n in range(1, N):
-    arm = -1
-    v= 1.0/3 #rate, needs to be less than 1/K
-
-    max_upper_bound = float('-inf')
-
-    choose = int(SeqChoose(v,d,n))
+play1 = p1.rvs(1000)
+play2 = p2.rvs(1000)
+play3 = p3.rvs(1000)
+data = {'p1': play1,'p2':play2,'p3':play3}
+df = pd.DataFrame(data)
 
 
-    if choose != 0: 
-        choose = choose-1
-        arms_selected.append(choose+1) # which arms have been selected
-        numbers_of_selections[choose] += 1  # number of selections +1
-        reward = df.values[n, choose] # get the reward of the arm
-        sums_of_reward[choose] += reward # keep track of rewards of each arm
-        total_reward +=reward
-
-
-
-
-    else:
-        #UCB 
-        for i in range(0, d):
-
-            #Confidence Interval
-            conf_int = math.sqrt(2 * math.log(n) / numbers_of_selections[i])
-            
-            #Average Reward
-            average_reward = sums_of_reward[i] / numbers_of_selections[i]
-            
-            #Upper Bound
-            upper_bound = (average_reward + conf_int)
-
-            if upper_bound > max_upper_bound:
-                max_upper_bound = upper_bound
-                arm = i
-
-        arms_selected.append(arm+1) # which arm have been selected
-        numbers_of_selections[arm] += 1  # number of selections +1
-        reward = df.values[n, arm] # get the reward of the arm 
-        sums_of_reward[arm] += reward#keep track of rewards of each arm
-        total_reward += reward
-
+result = strict_rate_UCB(S,g,K,v,T)
 
 print 'Schedule by AUCB algorithm; 0 indicates that the arm with the max UCB bound is chosen: '
-seq = []
-for i in range(0,n):
-  seq.append(int(SeqChoose(v,d,i)))
-print(seq)
-
-print 'Actual sequence of arms: ' + str(arms_selected)
+print(result['schedule'])
+print 'Actual sequence of arms: ' + str(result['arms_selected'])
 
 
-print 'Number of selections per arm: ' + str(numbers_of_selections)
+print 'Number of selections per arm: ' + str(result['numbers_of_selections'])
 
 
-print 'Example schedules by AUCB algorithm for more combinations:'
-d = 2
+print '\nExample schedules by AUCB algorithm for more combinations:'
+K = 2
 v = 1/3.0
-n = 12
-print 'd = '+str(d)+', v = ' + str(v) + ', n = ' + str(n)
-seq = []
-for i in range(0,n):
-  seq.append(int(SeqChoose(v,d,i)))
-print(seq)
+T = 20
+S = [2,3]
+print '\nK = '+str(K)+', v = ' + str(v) + ', T = ' + str(T) +', S = ' + str(S)
+g = choose_g(S,v)
+result = strict_rate_UCB(S,g,K,v,T)
+print(result['schedule'])
 
-d = 3
+K = 3
 v = 1/6.0
-n = 12
-print 'd = '+str(d)+', v = ' + str(v) + ', n = ' + str(n)
-seq = []
-for i in range(0,n):
-  seq.append(int(SeqChoose(v,d,i)))
-print(seq)
+T = 20
+S = [1,3,5]
+print '\nK = '+str(K)+', v = ' + str(v) + ', T = ' + str(T)+', S = ' + str(S)
+g = choose_g(S,v)
+result = strict_rate_UCB(S,g,K,v,T)
+print(result['schedule'])
 
-d = 3
+K = 3
 v = 1/4.0
-n = 12
-print 'd = '+str(d)+', v = ' + str(v) + ', n = ' + str(n)
-seq = []
-for i in range(0,n):
-  seq.append(int(SeqChoose(v,d,i)))
-print(seq)
-
-
+T = 20
+S = [1,2,3]
+print '\nK = '+str(K)+', v = ' + str(v) + ', T = ' + str(T)+', S = ' + str(S)
+g = choose_g(S,v)
+result = strict_rate_UCB(S,g,K,v,T)
+print(result['schedule'])
 
 
