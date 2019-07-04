@@ -23,7 +23,7 @@ def SeqChoose(v,K,t):
     Parameters
     ----------
     v : Rate
-        Must be below 0.5
+        Must be below 1/K
     K : Number of Arms
     t : Current time step
 
@@ -51,8 +51,9 @@ def SeqChoose(v,K,t):
 
 
 #Create Data frame of Two Player Responses
-p1=   NormVar(mean = .1, sd = .1, low = 0 , upp = 1  )
-p2 =  NormVar(mean = .9, sd = .1, low = 0 , upp = 1  )
+p1=   NormVar(mean = .4, sd = .3, low = 0 , upp = 1  )
+p2 =  NormVar(mean = .6, sd = .3, low = 0 , upp = 1  )
+
 play1 = p1.rvs(10000)
 play2 = p2.rvs(10000)
 dat= {'p1': play1,'p2':play2}
@@ -72,15 +73,16 @@ for i in range(0, d):
 
 for n in range(1, N):
     arm = -1
-    v= 1/4 #rate 
+    v= 1.0/3 #rate, needs to be less than 1/K
 
     max_upper_bound = float('-inf')
 
-    choose = SeqChoose(v,d,n) 
+    choose = int(SeqChoose(v,d,n))
+
 
     if choose != 0: 
         choose = choose-1
-        arms_selected.append(choose) # which arms have been selected
+        arms_selected.append(choose+1) # which arms have been selected
         numbers_of_selections[choose] += 1  # number of selections +1
         reward = df.values[n, choose] # get the reward of the arm
         sums_of_reward[choose] += reward # keep track of rewards of each arm
@@ -106,18 +108,53 @@ for n in range(1, N):
                 max_upper_bound = upper_bound
                 arm = i
 
-
-        arms_selected.append(arm) # which arm have been selected
+        arms_selected.append(arm+1) # which arm have been selected
         numbers_of_selections[arm] += 1  # number of selections +1
         reward = df.values[n, arm] # get the reward of the arm 
         sums_of_reward[arm] += reward#keep track of rewards of each arm
         total_reward += reward
 
 
+print 'Schedule by AUCB algorithm; 0 indicates that the arm with the max UCB bound is chosen: '
+seq = []
+for i in range(0,n):
+  seq.append(int(SeqChoose(v,d,i)))
+print(seq)
 
-print(numbers_of_selections)
-print(sums_of_reward)
-print(total_reward)
+print 'Actual sequence of arms: ' + str(arms_selected)
+
+
+print 'Number of selections per arm: ' + str(numbers_of_selections)
+
+
+print 'Example schedules by AUCB algorithm for more combinations:'
+d = 2
+v = 1/3.0
+n = 12
+print 'd = '+str(d)+', v = ' + str(v) + ', n = ' + str(n)
+seq = []
+for i in range(0,n):
+  seq.append(int(SeqChoose(v,d,i)))
+print(seq)
+
+d = 3
+v = 1/6.0
+n = 12
+print 'd = '+str(d)+', v = ' + str(v) + ', n = ' + str(n)
+seq = []
+for i in range(0,n):
+  seq.append(int(SeqChoose(v,d,i)))
+print(seq)
+
+d = 3
+v = 1/4.0
+n = 12
+print 'd = '+str(d)+', v = ' + str(v) + ', n = ' + str(n)
+seq = []
+for i in range(0,n):
+  seq.append(int(SeqChoose(v,d,i)))
+print(seq)
+
 
 
 
