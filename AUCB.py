@@ -150,5 +150,5 @@ print '\nK = '+str(K)+', v = ' + str(v) + ', T = ' + str(T)+', S = ' + str(S)
 g = choose_g(S,v)
 result = strict_rate_UCB(S,g,K,v,T)
 print(result['schedule'])
-
+ 
 
